@@ -1,0 +1,319 @@
+{
+  "info": {
+    "name": "Maqasid Member Module - Phases 1-4",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Member module APIs for Phases 1-4 (auth/profile/contributions/loans)."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "contributionId",
+      "value": ""
+    },
+    {
+      "key": "loanId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Phase 1 - Authentication & Profile",
+      "item": [
+        {
+          "name": "Member Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"member1@example.com\",\n  \"password\": \"member123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/member/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "member",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/member/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "member",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"member123\",\n  \"newPassword\": \"member1234\",\n  \"confirmNewPassword\": \"member1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/member/profile/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "member",
+                "profile",
+                "password"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 2 - Contribution Summary",
+      "item": [
+        {
+          "name": "List My Contributions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/member/contributions?page=1&limit=10&sort=-month&status=paid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "member",
+                "contributions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "-month"
+                },
+                {
+                  "key": "status",
+                  "value": "paid"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Contribution Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/member/contributions/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "member",
+                "contributions",
+                "summary"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 3 - Contribution Details & Reports",
+      "item": [
+        {
+          "name": "Contribution By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/member/contributions/{{contributionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "member",
+                "contributions",
+                "{{contributionId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Contributions By Year",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/member/contributions/year/2026",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "member",
+                "contributions",
+                "year",
+                "2026"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 4 - Loan Summary",
+      "item": [
+        {
+          "name": "List My Loans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/member/loans?page=1&limit=10&status=closed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "member",
+                "loans"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "closed"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Loan By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/member/loans/{{loanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "member",
+                "loans",
+                "{{loanId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Loan Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/member/loans/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "member",
+                "loans",
+                "summary"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
