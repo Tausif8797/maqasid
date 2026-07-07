@@ -287,7 +287,7 @@ export default function LoanDetails() {
             <label className="mb-1 block text-sm font-medium text-slate-700">Repayment Amount (₹)</label>
             <input
               type="number"
-              step="0.01"
+              step="1"
               max={loan.remaining}
               value={repayAmount}
               onChange={(e) => setRepayAmount(e.target.value)}

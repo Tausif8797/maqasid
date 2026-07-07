@@ -16,12 +16,13 @@ async function recalculateRemaining(loanId) {
     { $group: { _id: null, total: { $sum: '$amount' } } },
   ])
 
-  const sum = result[0]?.total || 0
+  const sum = Math.round((result[0]?.total || 0) * 100) / 100
   const loan = await Loan.findById(loanId)
   if (!loan) throw new ApiError(404, 'Loan not found')
 
-  loan.remaining = Math.max(0, loan.amount - sum)
-  if (loan.remaining === 0) {
+  loan.remaining = Math.max(0, Math.round((loan.amount - sum) * 100) / 100)
+  if (loan.remaining <= 0.01) {
+    loan.remaining = 0
     loan.status = 'paid'
   }
   await loan.save()
@@ -197,8 +198,8 @@ async function updateRepayment(id, data) {
       { $match: { loanId: repayment.loanId } },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ])
-    const existingSum = currentSum[0]?.total || 0
-    const prospectiveTotal = existingSum - repayment.amount + newAmount
+    const existingSum = Math.round((currentSum[0]?.total || 0) * 100) / 100
+    const prospectiveTotal = Math.round((existingSum - repayment.amount + newAmount) * 100) / 100
 
     if (prospectiveTotal > loan.amount) {
       throw new ApiError(400, `Updated repayment amount would exceed loan principal (${loan.amount})`)

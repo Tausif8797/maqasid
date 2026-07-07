@@ -32,7 +32,20 @@ export default function IssueLoan() {
   const activeMembers = members.filter((m) => m.status === 'active')
 
   useEffect(() => {
-    loanApi.getAvailableFunds().then((res) => setAvailableFunds(res.availableFunds))
+    const fetchFunds = () =>
+      loanApi.getAvailableFunds().then((res) => setAvailableFunds(res.availableFunds))
+
+    fetchFunds()
+
+    // Re-fetch available funds every 30 seconds and on window focus
+    const interval = setInterval(fetchFunds, 30000)
+    const onFocus = () => fetchFunds()
+    window.addEventListener('focus', onFocus)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+    }
   }, [])
 
   const validate = () => {
@@ -48,6 +61,13 @@ export default function IssueLoan() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    // Re-fetch available funds right before submission for the freshest value
+    const latestFunds = await loanApi.getAvailableFunds().then((res) => res.availableFunds).catch(() => availableFunds)
+    setAvailableFunds(latestFunds)
+    if (Number(formData.amount) > latestFunds) {
+      setErrors({ amount: `Loan amount cannot exceed available balance (₹${latestFunds.toLocaleString('en-IN')})` })
+      return
+    }
     if (!validate()) return
     setSubmitting(true)
     try {
@@ -127,6 +147,7 @@ export default function IssueLoan() {
               label="Loan Amount (₹)"
               name="amount"
               type="number"
+              step="1"
               icon={FiCheck}
               placeholder="Enter loan amount"
               value={formData.amount}
