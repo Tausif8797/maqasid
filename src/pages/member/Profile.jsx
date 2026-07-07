@@ -12,19 +12,26 @@ import PageHeader from '../../components/ui/PageHeader.jsx'
 import Card, { CardBody, CardHeader } from '../../components/ui/Card.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 import { memberApi } from '../../api/memberApi.js'
+import { memberDashboardApi } from '../../api/memberDashboardApi.js'
 import { formatDate, formatCurrency, getInitials } from '../../utils/format.js'
 import Loader from '../../components/ui/Loader.jsx'
 
 /** Member profile page: personal details, joining date and account summary. */
 export default function MemberProfile() {
   const [member, setMember] = useState(null)
+  const [dashboard, setDashboard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    memberApi
-      .getProfile()
-      .then((data) => setMember(data.member))
+    Promise.all([
+      memberApi.getProfile(),
+      memberDashboardApi.getMyDashboard(),
+    ])
+      .then(([profileData, dashboardData]) => {
+        setMember(profileData.member)
+        setDashboard(dashboardData)
+      })
       .catch((err) => setError(err.message || 'Failed to load profile'))
       .finally(() => setLoading(false))
   }, [])
@@ -98,12 +105,12 @@ export default function MemberProfile() {
               <Detail
                 icon={FiDollarSign}
                 label="Total Contributions"
-                value={formatCurrency(0)}
+                value={formatCurrency(dashboard?.totalContribution || 0)}
               />
               <Detail
                 icon={FiCreditCard}
                 label="Active Loan"
-                value={formatCurrency(0)}
+                value={formatCurrency(dashboard?.remainingLoan || 0)}
               />
               <Detail
                 icon={FiCreditCard}

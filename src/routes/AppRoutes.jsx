@@ -20,6 +20,7 @@ import AdminLoanPassbook from '../pages/admin/LoanPassbook.jsx'
 import Settings from '../pages/admin/Settings.jsx'
 import AuditLogs from '../pages/admin/AuditLogs.jsx'
 import AdminNotifications from '../pages/admin/Notifications.jsx'
+import AdminSettlements from '../pages/admin/Settlements.jsx'
 
 // Member pages
 import MemberDashboard from '../pages/member/Dashboard.jsx'
@@ -65,6 +66,7 @@ export default function AppRoutes() {
         <Route path="settings" element={<Settings />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="audit-logs" element={<AuditLogs />} />
+        <Route path="settlements" element={<AdminSettlements />} />
       </Route>
 
       {/* Force password change (standalone, no dashboard layout) */}

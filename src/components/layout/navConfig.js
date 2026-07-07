@@ -21,6 +21,7 @@ export const NAV_CONFIG = {
     { to: '/admin/passbook', label: 'Loan Passbook', icon: FiBookOpen },
     { to: '/admin/notifications', label: 'Notifications', icon: FiBell },
     { to: '/admin/audit-logs', label: 'Audit Logs', icon: FiShield },
+    { to: '/admin/settlements', label: 'Settlements', icon: FiDollarSign },
     { to: '/admin/settings', label: 'Settings', icon: FiSettings },
   ],
   member: [

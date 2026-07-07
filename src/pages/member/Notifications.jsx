@@ -68,6 +68,7 @@ export default function MemberNotifications() {
       await notificationApi.markAllRead()
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
       setPagination((prev) => ({ ...prev, unreadCount: 0 }))
+      window.dispatchEvent(new Event('notifications-read'))
     } catch (err) {
       setError(err.message || 'Failed to mark all as read')
     } finally {

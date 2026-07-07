@@ -14,7 +14,8 @@ export default function TopNavbar({ onMenuClick }) {
   const [unreadCount, setUnreadCount] = useState(0)
   const intervalRef = useRef(null)
 
-  // Poll unread notification count every 30 s.
+  // Poll unread notification count every 30 s, and also re-fetch immediately
+  // when the 'notifications-read' custom event is dispatched (by the Notifications page).
   useEffect(() => {
     const fetchCount = async () => {
       try {
@@ -27,7 +28,11 @@ export default function TopNavbar({ onMenuClick }) {
 
     fetchCount()
     intervalRef.current = setInterval(fetchCount, 30_000)
-    return () => clearInterval(intervalRef.current)
+    window.addEventListener('notifications-read', fetchCount)
+    return () => {
+      clearInterval(intervalRef.current)
+      window.removeEventListener('notifications-read', fetchCount)
+    }
   }, [])
 
   const handleNotificationClick = () => {

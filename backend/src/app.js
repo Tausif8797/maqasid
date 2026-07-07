@@ -19,6 +19,7 @@ const memberProfileRoutes = require('./routes/memberProfileRoutes')
 const memberContributionRoutes = require('./routes/memberContributionRoutes')
 const memberLoanRoutes = require('./routes/memberLoanRoutes')
 const memberDashboardRoutes = require('./routes/memberDashboardRoutes')
+const settlementRoutes = require('./routes/settlementRoutes')
 const { notFound, errorHandler } = require('./middleware/errorMiddleware')
 
 const app = express()
@@ -60,6 +61,7 @@ app.use('/api/member', memberProfileRoutes)
 app.use('/api/member/contributions', memberContributionRoutes)
 app.use('/api/member/loans', memberLoanRoutes)
 app.use('/api/member/dashboard', memberDashboardRoutes)
+app.use('/api/settlements', settlementRoutes)
 
 // ---- Error handling (must be last) --------------------------------------
 app.use(notFound)

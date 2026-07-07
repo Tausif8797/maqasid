@@ -40,7 +40,7 @@ const memberSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Active', 'Inactive'],
+      enum: ['Active', 'Inactive', 'Exited'],
       default: 'Active',
     },
     mustChangePassword: {
@@ -57,6 +57,10 @@ const memberSchema = new mongoose.Schema(
       default: false,
     },
     deletedAt: {
+      type: Date,
+      default: null,
+    },
+    exitedAt: {
       type: Date,
       default: null,
     },

@@ -27,6 +27,7 @@ import ContributionsTable from '../../components/tables/ContributionsTable.jsx'
 import LoansTable from '../../components/tables/LoansTable.jsx'
 import LoanSummaryCard from '../../components/cards/LoanSummaryCard.jsx'
 import PaymentTimeline from '../../components/cards/PaymentTimeline.jsx'
+import SettlementModal from '../../components/cards/SettlementModal.jsx'
 import { useData } from '../../hooks/useData.js'
 import { formatCurrency, formatDate, getInitials } from '../../utils/format.js'
 
@@ -52,6 +53,8 @@ export default function MemberDetails() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [togglingStatus, setTogglingStatus] = useState(false)
+  const [settleModalOpen, setSettleModalOpen] = useState(false)
+  const [settled, setSettled] = useState(false)
 
   const member = getMemberById(id)
 
@@ -76,7 +79,8 @@ export default function MemberDetails() {
   const contributions = getContributionsByMember(id)
   const loans = getLoansByMember(id)
   const activeLoan = loans.find((l) => l.status === 'active')
-  const isActive = member.status === 'active'
+  const isActive = member.status === 'Active'
+  const isExited = member.status === 'Exited'
 
   /** Toggle member status between Active and Inactive. */
   const handleToggleStatus = async () => {
@@ -252,6 +256,16 @@ export default function MemberDetails() {
             >
               Edit Member
             </Button>
+            {!isExited && (
+              <Button
+                size="sm"
+                icon={FiDollarSign}
+                variant="danger"
+                onClick={() => setSettleModalOpen(true)}
+              >
+                Settle Member
+              </Button>
+            )}
             <Button
               size="sm"
               icon={FiTrash2}
@@ -263,6 +277,14 @@ export default function MemberDetails() {
           </div>
         </CardBody>
       </Card>
+
+      <SettlementModal
+        memberId={memberId}
+        memberName={member.name}
+        open={settleModalOpen}
+        onClose={() => setSettleModalOpen(false)}
+        onSettled={() => setSettled(true)}
+      />
 
       {/* Delete confirmation modal */}
       <Modal
