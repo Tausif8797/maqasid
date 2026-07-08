@@ -3,6 +3,7 @@ const express = require('express')
 const {
   getSettings,
   updateSettings,
+  cleanupDatabase,
 } = require('../controllers/contributionSettingController')
 const { protect, authorize } = require('../middleware/authMiddleware')
 const validate = require('../middleware/validate')
@@ -18,5 +19,8 @@ router.get('/contributions', getSettings)
 
 // PUT /api/settings/contributions
 router.put('/contributions', updateSettingsRules, validate, updateSettings)
+
+// POST /api/settings/cleanup
+router.post('/cleanup', cleanupDatabase)
 
 module.exports = router

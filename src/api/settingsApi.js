@@ -13,4 +13,10 @@ export const settingsApi = {
       method: 'PUT',
       body: data,
     }).then((r) => r.data),
+
+  /** Reset database - delete all data except admin accounts. */
+  cleanup: () =>
+    apiRequest('/settings/cleanup', {
+      method: 'POST',
+    }).then((r) => r.data),
 }

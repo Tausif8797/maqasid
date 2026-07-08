@@ -1,4 +1,4 @@
-// Cleanup script - deletes all data from the database
+// Cleanup script - deletes all data except admin accounts
 const mongoose = require('mongoose')
 const connectDB = require('./src/config/db')
 
@@ -9,15 +9,21 @@ async function cleanup() {
     // Get all collection names
     const collections = await mongoose.connection.db.listCollections().toArray()
     
-    console.log('🗑️  Deleting all data...\n')
+    console.log('🗑️  Deleting all data except admin accounts...\n')
     
     for (const collection of collections) {
+      // Preserve Admin collection
+      if (collection.name === 'admins') {
+        console.log(`⏭️  ${collection.name}: Preserved (admin accounts)`)
+        continue
+      }
+      
       const result = await mongoose.connection.db.collection(collection.name).deleteMany({})
       console.log(`✓ ${collection.name}: Deleted ${result.deletedCount} documents`)
     }
 
     console.log('\n✅ Database cleaned successfully!')
-    console.log('📝 Note: Admin and members need to be recreated via the app')
+    console.log('📝 Admin accounts preserved. All other data has been deleted.')
     
   } catch (error) {
     console.error('❌ Cleanup failed:', error.message)
