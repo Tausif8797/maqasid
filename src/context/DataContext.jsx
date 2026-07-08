@@ -167,14 +167,14 @@ export function DataProvider({ children }) {
     return normalized
   }, [])
 
-  /** Update a member's status (Active/Inactive) via the API. */
+  /** Update a member's status (Active/Inactive/Exited) via the API. */
   const updateMemberStatus = useCallback(async (id, status) => {
     const { member } = await memberApi.setStatus(id, status)
     setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, status: member.status === 'Active' ? 'active' : 'inactive' } : m)),
+      prev.map((m) => (m.id === id ? { ...m, status: normalizeMember(member).status } : m)),
     )
     return member
-  }, [])
+  }, [normalizeMember])
 
   /** Update a member's fields via the API. */
   const updateMember = useCallback(async (id, data) => {

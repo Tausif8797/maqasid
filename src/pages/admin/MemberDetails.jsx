@@ -79,8 +79,8 @@ export default function MemberDetails() {
   const contributions = getContributionsByMember(id)
   const loans = getLoansByMember(id)
   const activeLoan = loans.find((l) => l.status === 'active')
-  const isActive = member.status === 'Active'
-  const isExited = member.status === 'Exited'
+  const isActive = member.status?.toLowerCase() === 'active'
+  const isExited = member.status?.toLowerCase() === 'exited'
 
   /** Toggle member status between Active and Inactive. */
   const handleToggleStatus = async () => {
