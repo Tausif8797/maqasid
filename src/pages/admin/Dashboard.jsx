@@ -15,10 +15,6 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
 } from 'recharts'
 import StatCard from '../../components/cards/StatCard.jsx'
 import Card, { CardHeader, CardBody } from '../../components/ui/Card.jsx'
@@ -28,17 +24,6 @@ import { StatCardSkeleton } from '../../components/ui/Skeleton.jsx'
 import EmptyState from '../../components/ui/EmptyState.jsx'
 import { dashboardApi } from '../../api/dashboardApi.js'
 import { formatCurrency, formatDate } from '../../utils/format.js'
-
-const PIE_COLORS = [
-  '#3563ff',
-  '#16a34a',
-  '#db2777',
-  '#ea580c',
-  '#0891b2',
-  '#7c3aed',
-  '#ca8a04',
-  '#dc2626',
-]
 
 /** Admin landing dashboard: KPIs, charts and recent activity from live API. */
 export default function AdminDashboard() {
@@ -67,8 +52,8 @@ export default function AdminDashboard() {
 
   const cards = [
     {
-      label: 'Total Members',
-      value: data?.totalMembers ?? 0,
+      label: 'Active Members',
+      value: data?.activeMembers ?? 0,
       icon: FiUsers,
       tone: 'brand',
     },
@@ -111,8 +96,8 @@ export default function AdminDashboard() {
           : cards.map((c) => <StatCard key={c.label} {...c} />)}
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="mt-6 grid grid-cols-1 gap-6">
+        <Card>
           <CardHeader
             title="Monthly Collections"
             subtitle="Contributions received over the last 6 months"
@@ -138,50 +123,6 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <EmptyState title="No contribution data yet" />
-            )}
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Loan Distribution"
-            subtitle="Active loans by member"
-          />
-          <CardBody>
-            {loading ? (
-              <div className="flex h-72 items-center justify-center text-sm text-slate-400">Loading chart...</div>
-            ) : data?.loanDistribution?.length ? (
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data.loanDistribution}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={55}
-                      outerRadius={85}
-                      paddingAngle={2}
-                    >
-                      {data.loanDistribution.map((entry, index) => (
-                        <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(v, n) => [formatCurrency(v), n]}
-                      contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }}
-                    />
-                    <Legend
-                      wrapperStyle={{ fontSize: 11 }}
-                      iconType="circle"
-                      formatter={(value) => (
-                        <span className="text-slate-500">{value}</span>
-                      )}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <EmptyState title="No active loans" />
             )}
           </CardBody>
         </Card>

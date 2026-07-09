@@ -36,12 +36,6 @@ export const memberApi = {
       body: { status },
     }).then((r) => r.data),
 
-  /** Soft-delete a member. */
-  delete: (id) =>
-    apiRequest(`/members/${id}`, {
-      method: 'DELETE',
-    }).then((r) => r.data),
-
   // ---- Member self-service endpoints ----
 
   /** Fetch the logged-in member's profile. Resolves to `{ member }`. */

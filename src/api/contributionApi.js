@@ -20,4 +20,11 @@ export const contributionApi = {
       method: 'PATCH',
       body: { status },
     }).then((r) => r.data),
+
+  /** Bulk update multiple contributions. */
+  bulkUpdate: (contributionIds, status) =>
+    apiRequest('/contributions/bulk-update', {
+      method: 'POST',
+      body: { contributionIds, status },
+    }).then((r) => r.data),
 }

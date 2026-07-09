@@ -8,7 +8,7 @@ const { buildMeta } = require('../utils/buildMeta')
  * @access  Private (admin)
  */
 const previewSettlement = asyncHandler(async (req, res) => {
-  const result = await settlementService.calculateSettlement(req.params.memberId)
+  const result = await settlementService.calculateSettlementPreview(req.params.memberId)
   res.status(200).json({
     success: true,
     data: result,

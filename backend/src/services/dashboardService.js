@@ -3,6 +3,7 @@ const Contribution = require('../models/Contribution')
 const Loan = require('../models/Loan')
 const Member = require('../models/Member')
 const LoanRepayment = require('../models/LoanRepayment')
+const Settlement = require('../models/Settlement')
 
 /**
  * Build the admin dashboard statistics from live aggregation of existing
@@ -21,13 +22,20 @@ async function getAdminDashboardStats() {
   ])
 
   // ── 2. Fund aggregates ──────────────────────────────────────────────
-  // totalFundsCollected: sum of all paid contributions (money coming in)
+  // totalFundsCollected: sum of ALL paid contributions, INCLUDING the
+  //   negative settlement-payout records (isSettlementPayout: true) that
+  //   executeSettlement writes. This makes the total fund balance reflect
+  //   settlements automatically (money going out reduces the total).
+  // totalSettlementPayout: sum of all settlement net amounts (reference only)
   // activeLoanPrincipal: sum of original amount of active loans (money given out)
   // activeLoanAmount: sum of remaining balance on active loans (what's still owed)
-  const [totalCollected, activeLoanPrincipalAgg, activeLoanRemainingAgg] = await Promise.all([
+  const [totalCollected, totalSettlementPayoutAgg, activeLoanPrincipalAgg, activeLoanRemainingAgg] = await Promise.all([
     Contribution.aggregate([
       { $match: { status: 'paid' } },
       { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]),
+    Settlement.aggregate([
+      { $group: { _id: null, total: { $sum: '$netAmount' } } },
     ]),
     Loan.aggregate([
       { $match: { status: 'active' } },
@@ -40,10 +48,12 @@ async function getAdminDashboardStats() {
   ])
 
   const totalFundsCollected = totalCollected[0]?.total || 0
+  const totalSettlementPayout = totalSettlementPayoutAgg[0]?.total || 0
   const totalActiveLoanPrincipal = activeLoanPrincipalAgg[0]?.total || 0
   const totalActiveLoanAmount = activeLoanRemainingAgg[0]?.total || 0
   const totalActiveLoans = await Loan.countDocuments({ status: 'active' })
-  const availableBalance = totalFundsCollected - totalActiveLoanPrincipal
+  // Available balance = total fund (already net of settlement payouts) - remaining active loans
+  const availableBalance = totalFundsCollected - totalActiveLoanAmount
 
   // ── 3. Monthly collections (last 6 months) ──────────────────────────
   const sixMonthsAgo = new Date(currentYear, currentMonth - 6, 1)
@@ -130,6 +140,7 @@ async function getAdminDashboardStats() {
     totalMembers,
     activeMembers,
     totalFundsCollected,
+    totalSettlementPayout,
     totalActiveLoans,
     totalActiveLoanPrincipal,
     totalActiveLoanAmount,

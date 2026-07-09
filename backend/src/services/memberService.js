@@ -215,34 +215,10 @@ async function setMemberStatus(id, status, meta = {}) {
   return toPublicMember(member)
 }
 
-/**
- * Soft-delete a member by setting isDeleted to true.
- * @param {string} id
- * @returns {Promise<object>} Public member.
- */
-async function deleteMember(id, meta = {}) {
-  const member = await Member.findOneAndUpdate(
-    { _id: id, isDeleted: false },
-    { isDeleted: true, deletedAt: new Date() },
-    { new: true },
-  )
-  if (!member) throw new ApiError(404, 'Member not found')
-
-  logAudit(meta, {
-    action: 'MEMBER_DELETED',
-    entity: 'Member',
-    entityId: member._id,
-    description: `Member ${member.name} deleted`,
-  })
-
-  return toPublicMember(member)
-}
-
 module.exports = {
   createMember,
   listMembers,
   getMemberById,
   updateMember,
   setMemberStatus,
-  deleteMember,
 }

@@ -72,25 +72,10 @@ const updateMemberStatus = asyncHandler(async (req, res) => {
   })
 })
 
-/**
- * @desc    Soft-delete a member
- * @route   DELETE /api/members/:id
- * @access  Private (admin)
- */
-const deleteMember = asyncHandler(async (req, res) => {
-  const member = await memberService.deleteMember(req.params.id, buildMeta(req))
-  res.status(200).json({
-    success: true,
-    message: 'Member deleted successfully',
-    data: { member },
-  })
-})
-
 module.exports = {
   createMember,
   listMembers,
   getMember,
   updateMember,
   updateMemberStatus,
-  deleteMember,
 }

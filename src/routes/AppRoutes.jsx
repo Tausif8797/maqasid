@@ -18,8 +18,6 @@ import LoanDetails from '../pages/admin/LoanDetails.jsx'
 import IssueLoan from '../pages/admin/IssueLoan.jsx'
 import AdminLoanPassbook from '../pages/admin/LoanPassbook.jsx'
 import Settings from '../pages/admin/Settings.jsx'
-import AuditLogs from '../pages/admin/AuditLogs.jsx'
-import AdminNotifications from '../pages/admin/Notifications.jsx'
 import AdminSettlements from '../pages/admin/Settlements.jsx'
 
 // Member pages
@@ -27,10 +25,8 @@ import MemberDashboard from '../pages/member/Dashboard.jsx'
 import MemberContributions from '../pages/member/Contributions.jsx'
 import ContributionDetails from '../pages/member/ContributionDetails.jsx'
 import MemberLoans from '../pages/member/Loans.jsx'
-import MemberLoan from '../pages/member/LoanDetails.jsx'
 import MemberLoanPassbook from '../pages/member/LoanPassbook.jsx'
 import MemberProfile from '../pages/member/Profile.jsx'
-import MemberNotifications from '../pages/member/Notifications.jsx'
 import ForceChangePassword from '../pages/member/ForceChangePassword.jsx'
 
 import NotFound from '../pages/NotFound.jsx'
@@ -61,11 +57,8 @@ export default function AppRoutes() {
         <Route path="loans" element={<Loans />} />
         <Route path="loans/create" element={<IssueLoan />} />
         <Route path="loans/:id" element={<LoanDetails />} />
-        <Route path="passbook" element={<AdminLoanPassbook />} />
         <Route path="passbook/:loanId" element={<AdminLoanPassbook />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="notifications" element={<AdminNotifications />} />
-        <Route path="audit-logs" element={<AuditLogs />} />
         <Route path="settlements" element={<AdminSettlements />} />
       </Route>
 
@@ -94,9 +87,7 @@ export default function AppRoutes() {
         <Route path="contributions/:id" element={<ContributionDetails />} />
         <Route path="loans" element={<MemberLoans />} />
         <Route path="loans/:loanId/passbook" element={<MemberLoanPassbook />} />
-        <Route path="loan" element={<MemberLoan />} />
         <Route path="profile" element={<MemberProfile />} />
-        <Route path="notifications" element={<MemberNotifications />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

@@ -6,7 +6,6 @@ const {
   getMember,
   updateMember,
   updateMemberStatus,
-  deleteMember,
 } = require('../controllers/memberController')
 const { protect, authorize } = require('../middleware/authMiddleware')
 const validate = require('../middleware/validate')
@@ -37,8 +36,5 @@ router.put('/:id', idParamRules, updateMemberRules, validate, updateMember)
 
 // PATCH /api/members/:id/status
 router.patch('/:id/status', idParamRules, statusRules, validate, updateMemberStatus)
-
-// DELETE /api/members/:id
-router.delete('/:id', idParamRules, validate, deleteMember)
 
 module.exports = router

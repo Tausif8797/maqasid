@@ -8,17 +8,7 @@ import EmptyState from '../../components/ui/EmptyState.jsx'
 import { settlementApi } from '../../api/settlementApi.js'
 import { formatCurrency, formatDate } from '../../utils/format.js'
 
-/** Direction badge variant. */
-function directionBadge(direction) {
-  const map = {
-    pay_to_member: { label: 'Pay to Member', variant: 'success' },
-    collect_from_member: { label: 'Collect from Member', variant: 'danger' },
-    zero: { label: 'Zero', variant: 'info' },
-  }
-  return map[direction] || { label: direction, variant: 'info' }
-}
-
-/** Admin settlements list page. */
+/** Admin settlements list page - simplified view. */
 export default function Settlements() {
   const [settlements, setSettlements] = useState([])
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 })
@@ -77,39 +67,32 @@ export default function Settlements() {
                   <tr>
                     <th className="px-5 py-3 text-left font-semibold text-slate-700">Member</th>
                     <th className="px-5 py-3 text-right font-semibold text-slate-700">Contributions</th>
-                    <th className="px-5 py-3 text-right font-semibold text-slate-700">Remaining Loan</th>
-                    <th className="px-5 py-3 text-right font-semibold text-slate-700">Net Amount</th>
-                    <th className="px-5 py-3 text-center font-semibold text-slate-700">Direction</th>
+                    <th className="px-5 py-3 text-right font-semibold text-slate-700">Loan</th>
+                    <th className="px-5 py-3 text-right font-semibold text-slate-700">Payout</th>
                     <th className="px-5 py-3 text-left font-semibold text-slate-700">Settled At</th>
                     <th className="px-5 py-3 text-left font-semibold text-slate-700">Settled By</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {settlements.map((s) => {
-                    const badge = directionBadge(s.direction)
-                    return (
-                      <tr key={s.id} className="hover:bg-slate-50">
-                        <td className="px-5 py-4">
-                          <p className="font-medium text-slate-800">{s.member?.name || 'Unknown'}</p>
-                          <p className="text-xs text-slate-400">{s.member?.email}</p>
-                        </td>
-                        <td className="px-5 py-4 text-right font-medium text-green-600">
-                          {formatCurrency(s.totalContributions)}
-                        </td>
-                        <td className="px-5 py-4 text-right font-medium text-red-600">
-                          {formatCurrency(s.remainingLoan)}
-                        </td>
-                        <td className="px-5 py-4 text-right font-semibold text-slate-800">
-                          {formatCurrency(s.netAmount)}
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <Badge variant={badge.variant}>{badge.label}</Badge>
-                        </td>
-                        <td className="px-5 py-4 text-slate-600">{formatDate(s.settledAt)}</td>
-                        <td className="px-5 py-4 text-slate-600">{s.settledBy?.name || 'Unknown'}</td>
-                      </tr>
-                    )
-                  })}
+                  {settlements.map((s) => (
+                    <tr key={s.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-4">
+                        <p className="font-medium text-slate-800">{s.member?.name || 'Unknown'}</p>
+                        <p className="text-xs text-slate-400">{s.member?.email}</p>
+                      </td>
+                      <td className="px-5 py-4 text-right font-medium text-green-600">
+                        {formatCurrency(s.totalContributions)}
+                      </td>
+                      <td className="px-5 py-4 text-right font-medium text-red-600">
+                        {formatCurrency(s.activeLoans)}
+                      </td>
+                      <td className="px-5 py-4 text-right font-semibold text-slate-800">
+                        {formatCurrency(s.payoutAmount)}
+                      </td>
+                      <td className="px-5 py-4 text-slate-600">{formatDate(s.settledAt)}</td>
+                      <td className="px-5 py-4 text-slate-600">{s.settledBy?.name || 'Unknown'}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

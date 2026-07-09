@@ -99,7 +99,11 @@ export default function LoanPassbook() {
         <CardBody>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div><p className="text-xs text-slate-500">Issue Date</p><p className="mt-1 text-sm font-medium text-slate-800">{formatDate(loan.issueDate)}</p></div>
-            <div><p className="text-xs text-slate-500">Due Date</p><p className="mt-1 text-sm font-medium text-slate-800">{formatDate(loan.dueDate)}</p></div>
+            {loan.status === 'paid' ? (
+              <div><p className="text-xs text-slate-500">Closure Date</p><p className="mt-1 text-sm font-medium text-slate-800">{loan.closedAt ? formatDate(loan.closedAt) : 'N/A'}</p></div>
+            ) : (
+              <div><p className="text-xs text-slate-500">Due Date</p><p className="mt-1 text-sm font-medium text-slate-800">{loan.dueDate ? formatDate(loan.dueDate) : 'N/A'}</p></div>
+            )}
             <div><p className="text-xs text-slate-500">Status</p><div className="mt-1"><Badge variant={loan.status === 'active' ? 'success' : 'slate'}>{loan.status}</Badge></div></div>
             <div><p className="text-xs text-slate-500">Total Payments</p><p className="mt-1 text-sm font-medium text-slate-800">{summary.totalPayments}</p></div>
             {summary.lastPaymentDate && (<div><p className="text-xs text-slate-500">Last Payment</p><p className="mt-1 text-sm font-medium text-slate-800">{formatDate(summary.lastPaymentDate)}</p></div>)}
@@ -120,19 +124,17 @@ export default function LoanPassbook() {
                   <tr>
                     <th className="px-5 py-3 text-left font-semibold text-slate-700">#</th>
                     <th className="px-5 py-3 text-left font-semibold text-slate-700">Date</th>
-                    <th className="px-5 py-3 text-left font-semibold text-slate-700">Amount</th>
-                    <th className="px-5 py-3 text-left font-semibold text-slate-700">Method</th>
-                    <th className="px-5 py-3 text-left font-semibold text-slate-700">Reference</th>
+                    <th className="px-5 py-3 text-right font-semibold text-slate-700">Amount</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {payments.map((payment, index) => (
                     <tr key={payment.id} className="hover:bg-slate-50">
                       <td className="px-5 py-4 text-slate-600">{index + 1}</td>
-                      <td className="px-5 py-4 font-medium text-slate-800">{formatDate(payment.paymentDate)}</td>
-                      <td className="px-5 py-4 text-slate-600">{formatCurrency(payment.amount)}</td>
-                      <td className="px-5 py-4 text-slate-600">{payment.method || 'N/A'}</td>
-                      <td className="px-5 py-4 text-slate-600">{payment.reference || 'N/A'}</td>
+                      <td className="px-5 py-4 font-medium text-slate-800">
+                        {payment.paymentDate ? formatDate(payment.paymentDate) : 'N/A'}
+                      </td>
+                      <td className="px-5 py-4 text-right text-slate-600">{formatCurrency(payment.amount)}</td>
                     </tr>
                   ))}
                 </tbody>

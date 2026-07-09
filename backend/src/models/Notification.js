@@ -2,36 +2,46 @@
 const mongoose = require('mongoose')
 
 /**
- * Notification schema - stores in-app alerts for both admins and members.
- * Polled by the frontend; never delivered via email or push in this phase.
- * Compound index on { recipientId, isRead } keeps unread-count queries fast.
+ * Notification schema for in-app notifications.
+ * Supports different types: success, warning, info, alert
  */
 const notificationSchema = new mongoose.Schema(
   {
+    recipientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: [true, 'Recipient ID is required'],
+      ref: 'Member',
+    },
+    recipientRole: {
+      type: String,
+      enum: ['member', 'admin'],
+      required: [true, 'Recipient role is required'],
+      default: 'member',
+    },
     title: {
       type: String,
       required: [true, 'Title is required'],
       trim: true,
+      maxlength: [200, 'Title cannot exceed 200 characters'],
     },
     message: {
       type: String,
       required: [true, 'Message is required'],
       trim: true,
+      maxlength: [1000, 'Message cannot exceed 1000 characters'],
     },
     type: {
       type: String,
-      enum: ['info', 'success', 'warning', 'alert'],
+      enum: ['success', 'warning', 'info', 'alert'],
       default: 'info',
     },
-    recipientId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: [true, 'Recipient ID is required'],
-      index: true,
-    },
-    recipientRole: {
+    relatedEntity: {
       type: String,
-      enum: ['admin', 'member'],
-      required: [true, 'Recipient role is required'],
+      trim: true,
+      maxlength: [50, 'Entity name cannot exceed 50 characters'],
+    },
+    relatedEntityId: {
+      type: mongoose.Schema.Types.ObjectId,
     },
     isRead: {
       type: Boolean,
@@ -41,23 +51,14 @@ const notificationSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    relatedEntity: {
-      type: String,
-      enum: ['Member', 'Contribution', 'Loan', 'LoanRepayment', 'ContributionSetting', null],
-      default: null,
-    },
-    relatedEntityId: {
-      type: mongoose.Schema.Types.ObjectId,
-      default: null,
-    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 )
 
-// Compound index for fast unread-count and per-recipient queries
-notificationSchema.index({ recipientId: 1, isRead: 1 })
-notificationSchema.index({ createdAt: -1 })
+// Index for efficient querying of notifications by recipient
+notificationSchema.index({ recipientId: 1, createdAt: -1 })
+notificationSchema.index({ recipientId: 1, isRead: 1, createdAt: -1 })
 
-const Notification = mongoose.model('Notification', notificationSchema)
-
-module.exports = Notification
+module.exports = mongoose.model('Notification', notificationSchema)

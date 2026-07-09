@@ -46,8 +46,24 @@ const updateStatus = asyncHandler(async (req, res) => {
   })
 })
 
+/**
+ * @desc    Bulk update multiple contributions
+ * @route   POST /api/contributions/bulk-update
+ * @access  Private (admin)
+ */
+const bulkUpdateStatus = asyncHandler(async (req, res) => {
+  const { contributionIds, status } = req.body
+  const result = await contributionService.bulkUpdateContributionStatus(contributionIds, status, buildMeta(req))
+  res.status(200).json({
+    success: true,
+    message: result.message,
+    data: result,
+  })
+})
+
 module.exports = {
   generateContributions,
   listContributions,
   updateStatus,
+  bulkUpdateStatus,
 }

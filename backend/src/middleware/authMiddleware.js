@@ -31,9 +31,12 @@ const protect = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, 'Not authorized, account no longer exists')
   }
 
-  // Block sign-in access for deactivated members.
-  if (decoded.role === 'member' && account.status === 'Inactive') {
-    throw new ApiError(403, 'Your account is inactive. Contact the admin.')
+  // Block sign-in access for deactivated or settled members.
+  if (decoded.role === 'member' && (account.status === 'Inactive' || account.status === 'Settled')) {
+    const statusMessage = account.status === 'Settled' 
+      ? 'Your account has been settled. Contact the admin for more information.'
+      : 'Your account is inactive. Contact the admin.'
+    throw new ApiError(403, statusMessage)
   }
 
   req.user = account

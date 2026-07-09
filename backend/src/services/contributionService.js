@@ -141,8 +141,86 @@ async function updateContributionStatus(id, status, meta = {}) {
   return contribution
 }
 
+/**
+ * Bulk update multiple contributions' payment status.
+ * @param {string[]} contributionIds
+ * @param {string} status - 'paid' or 'unpaid'
+ * @param {object} meta
+ * @returns {Promise<{ message: string, updated: number, failed: number }>}
+ */
+async function bulkUpdateContributionStatus(contributionIds, status, meta = {}) {
+  if (!Array.isArray(contributionIds) || contributionIds.length === 0) {
+    throw new ApiError(400, 'No contribution IDs provided')
+  }
+
+  const contributions = await Contribution.find({ _id: { $in: contributionIds } }).populate('memberId', 'status name')
+  
+  let updated = 0
+  let failed = 0
+  const errors = []
+
+  for (const contribution of contributions) {
+    try {
+      // Check if member is inactive
+      if (contribution.memberId?.status === 'Inactive') {
+        failed++
+        errors.push(`${contribution.memberId?.name || 'Unknown'}: Inactive member`)
+        continue
+      }
+
+      // Update contribution
+      contribution.status = status
+      contribution.paymentDate = status === 'paid' ? new Date() : null
+      await contribution.save()
+
+      // Log audit
+      logAudit(meta, {
+        action: 'CONTRIBUTION_STATUS_CHANGED',
+        entity: 'Contribution',
+        entityId: contribution._id,
+        description: `Bulk update: Contribution for ${contribution.month} marked as ${status}`,
+      })
+
+      // Send notification if paid
+      if (status === 'paid') {
+        const [year, month] = contribution.month.split('-')
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        const formattedMonth = `${monthNames[parseInt(month) - 1]} ${year}`
+
+        createNotification({
+          recipientId: contribution.memberId?._id || contribution.memberId,
+          recipientRole: 'member',
+          title: 'Contribution received',
+          message: `Your contribution for ${formattedMonth} has been marked as paid.`,
+          type: 'success',
+          relatedEntity: 'Contribution',
+          relatedEntityId: contribution._id,
+        })
+      }
+
+      updated++
+    } catch (error) {
+      failed++
+      errors.push(`${contribution.memberId?.name || 'Unknown'}: ${error.message}`)
+    }
+  }
+
+  let message = `Successfully updated ${updated} contribution(s) to ${status}`
+  if (failed > 0) {
+    message += ` (${failed} failed)`
+  }
+
+  return {
+    message,
+    updated,
+    failed,
+    errors: errors.length > 0 ? errors : undefined,
+  }
+}
+
 module.exports = {
   generateMonthlyContributions,
   listContributions,
   updateContributionStatus,
+  bulkUpdateContributionStatus,
 }

@@ -48,10 +48,24 @@ export default function LoanDetails() {
   const handleRepay = async (e) => {
     e.preventDefault()
     setSubmitting(true)
-    setMessage('')
+    
+    // Validate repayment amount
+    const amount = Number(repayAmount)
+    if (amount > loan.remaining) {
+      setMessage(`Repayment amount (${formatCurrency(amount)}) cannot exceed remaining balance (${formatCurrency(loan.remaining)})`)
+      setSubmitting(false)
+      return
+    }
+    
+    if (amount <= 0) {
+      setMessage('Repayment amount must be greater than 0')
+      setSubmitting(false)
+      return
+    }
+    
     try {
       const result = await loanApi.repay(id, {
-        amount: Number(repayAmount),
+        amount: amount,
         date: repayDate,
         notes: repayNotes,
       })
@@ -59,13 +73,20 @@ export default function LoanDetails() {
       setRepayModalOpen(false)
       setRepayAmount('')
       setRepayNotes('')
+      setMessage('')
+      // Show success message
       setMessage('Repayment recorded successfully')
       setTimeout(() => setMessage(''), 3000)
-    } catch {
-      setMessage('Failed to record repayment')
+    } catch (err) {
+      setMessage(err.message || 'Failed to record repayment')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const openRepayModal = () => {
+    setMessage('')
+    setRepayModalOpen(true)
   }
 
   const handleCloseLoan = async () => {
@@ -231,7 +252,7 @@ export default function LoanDetails() {
       {!isFullyPaid && (
         <Card>
           <CardBody>
-            <Button icon={FiDollarSign} onClick={() => setRepayModalOpen(true)}>
+            <Button icon={FiDollarSign} onClick={openRepayModal}>
               Record Repayment
             </Button>
           </CardBody>
@@ -283,6 +304,15 @@ export default function LoanDetails() {
         }
       >
         <form onSubmit={handleRepay} className="space-y-4">
+          {message && (
+            <div className={`rounded-lg px-4 py-3 text-sm ${
+              message.includes('cannot exceed') || message.includes('must be greater')
+                ? 'bg-red-50 text-red-700'
+                : 'bg-green-50 text-green-700'
+            }`}>
+              {message}
+            </div>
+          )}
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Repayment Amount (₹)</label>
             <input
@@ -290,7 +320,13 @@ export default function LoanDetails() {
               step="1"
               max={loan.remaining}
               value={repayAmount}
-              onChange={(e) => setRepayAmount(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value
+                // Only allow whole numbers
+                if (value === '' || /^\d+$/.test(value)) {
+                  setRepayAmount(value)
+                }
+              }}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               required
             />

@@ -28,34 +28,27 @@ export function DataProvider({ children }) {
     status: m.status === 'Active' ? 'active' : m.status === 'Inactive' ? 'inactive' : m.status,
   }), [])
 
+  const fetchMembers = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await memberApi.list({ limit: 100 })
+      const normalized = (data.members || []).map(normalizeMember)
+      setMembers(normalized)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [normalizeMember])
+
   // Fetch members from the API when authenticated.
   useEffect(() => {
     if (!isAuthenticated) {
       setLoading(false)
       return
     }
-
-    let active = true
-    setLoading(true)
-    memberApi
-      .list({ limit: 100 })
-      .then((data) => {
-        if (active) {
-          const normalized = (data.members || []).map(normalizeMember)
-          setMembers(normalized)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (active) {
-          setError(err.message)
-          setLoading(false)
-        }
-      })
-    return () => {
-      active = false
-    }
-  }, [isAuthenticated, normalizeMember])
+    fetchMembers()
+  }, [isAuthenticated, fetchMembers])
 
   // Fetch contributions from the API when authenticated (admin only).
   useEffect(() => {
@@ -185,12 +178,6 @@ export function DataProvider({ children }) {
     return member
   }, [])
 
-  /** Soft-delete a member via the API. */
-  const deleteMember = useCallback(async (id) => {
-    await memberApi.delete(id)
-    setMembers((prev) => prev.filter((m) => m.id !== id))
-  }, [])
-
   // ---- Derived selectors -------------------------------------------------
 
   const getMemberById = useCallback(
@@ -267,10 +254,10 @@ export function DataProvider({ children }) {
       assignLoan,
       updateMember,
       updateMemberStatus,
-      deleteMember,
       getMemberById,
       getContributionsByMember,
       getLoansByMember,
+      refetchMembers: fetchMembers,
     }),
     [
       members,
@@ -288,10 +275,10 @@ export function DataProvider({ children }) {
       setContributions,
       updateMember,
       updateMemberStatus,
-      deleteMember,
       getMemberById,
       getContributionsByMember,
       getLoansByMember,
+      fetchMembers,
     ],
   )
 

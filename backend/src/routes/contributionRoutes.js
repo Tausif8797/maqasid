@@ -4,6 +4,7 @@ const {
   generateContributions,
   listContributions,
   updateStatus,
+  bulkUpdateStatus,
 } = require('../controllers/contributionController')
 const { protect, authorize } = require('../middleware/authMiddleware')
 const validate = require('../middleware/validate')
@@ -26,5 +27,8 @@ router.get('/', listQueryRules, validate, listContributions)
 
 // PATCH /api/contributions/:id/status
 router.patch('/:id/status', statusRules, validate, updateStatus)
+
+// POST /api/contributions/bulk-update
+router.post('/bulk-update', bulkUpdateStatus)
 
 module.exports = router

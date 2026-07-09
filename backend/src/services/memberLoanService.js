@@ -120,7 +120,7 @@ async function getMemberLoanPassbook(memberId, loanId) {
   const paymentsList = payments.map((p) => ({
     id: p._id,
     amount: p.amount,
-    paymentDate: p.paymentDate,
+    paymentDate: p.paymentDate || p.createdAt || new Date().toISOString(),
     method: p.method,
     reference: p.reference,
   }))
@@ -133,6 +133,7 @@ async function getMemberLoanPassbook(memberId, loanId) {
       status: loan.status,
       issueDate: loan.issueDate,
       dueDate: loan.dueDate,
+      closedAt: loan.closedAt,
     },
     payments: paymentsList,
     summary: {

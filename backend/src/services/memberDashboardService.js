@@ -34,6 +34,16 @@ async function getMemberDashboard(memberId) {
 
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
+  // Calculate next contribution month
+  let nextContributionMonth = null
+  if (contributions.length > 0) {
+    const latestMonth = contributions[0].month // Already sorted by month descending
+    const [year, month] = latestMonth.split('-').map(Number)
+    const nextMonth = month === 12 ? 1 : month + 1
+    const nextYear = month === 12 ? year + 1 : year
+    nextContributionMonth = `${nextYear}-${String(nextMonth).padStart(2, '0')}`
+  }
+
   return {
     profile: {
       name: member.name,
@@ -57,6 +67,7 @@ async function getMemberDashboard(memberId) {
           paymentDate: lastContribution.paymentDate,
         }
       : null,
+    nextContributionMonth,
     activeLoans: loans.map((l) => ({
       id: l._id,
       amount: l.amount,

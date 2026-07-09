@@ -21,12 +21,15 @@ const contributionSchema = new mongoose.Schema(
     amount: {
       type: Number,
       required: true,
-      min: [0, 'Amount cannot be negative'],
     },
     status: {
       type: String,
       enum: ['paid', 'unpaid'],
       default: 'unpaid',
+    },
+    isSettlementPayout: {
+      type: Boolean,
+      default: false,
     },
     paymentDate: {
       type: Date,
@@ -36,7 +39,10 @@ const contributionSchema = new mongoose.Schema(
   { timestamps: true },
 )
 
-// Ensure one record per member per month
-contributionSchema.index({ memberId: 1, month: 1 }, { unique: true })
+// Ensure one record per member per month (settlement payouts use a separate marker)
+contributionSchema.index(
+  { memberId: 1, month: 1, isSettlementPayout: 1 },
+  { unique: true, sparse: true },
+)
 
 module.exports = mongoose.model('Contribution', contributionSchema)

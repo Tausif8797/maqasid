@@ -27,11 +27,8 @@ export default function MemberLoans() {
   const fetchData = async () => {
     setLoading(true)
     setError('')
+    
     try {
-      // Fetch summary
-      const summaryRes = await memberLoanApi.getMyLoanSummary()
-      setSummary(summaryRes)
-
       // Fetch loans with filters
       const params = { page: currentPage, limit: 10 }
       if (statusFilter) params.status = statusFilter
@@ -41,6 +38,15 @@ export default function MemberLoans() {
       setTotalPages(loansRes.pagination.totalPages)
     } catch (err) {
       setError(err.message || 'Failed to load loans')
+    }
+    
+    try {
+      // Fetch summary independently
+      const summaryRes = await memberLoanApi.getMyLoanSummary()
+      setSummary(summaryRes)
+    } catch (err) {
+      // Silently fail summary fetch - loans data is more important
+      console.error('Failed to load loan summary:', err)
     } finally {
       setLoading(false)
     }
@@ -50,9 +56,6 @@ export default function MemberLoans() {
     fetchData()
   }, [currentPage, statusFilter])
 
-  const handleFilterChange = () => {
-    setCurrentPage(1) // Reset to first page when filters change
-  }
 
   const summaryCards = summary ? [
     {
@@ -133,7 +136,7 @@ export default function MemberLoans() {
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value)
-                handleFilterChange()
+                setCurrentPage(1) // Reset to first page when filter changes
               }}
               options={[
                 { value: '', label: 'All Status' },
@@ -146,7 +149,7 @@ export default function MemberLoans() {
                 variant="secondary"
                 onClick={() => {
                   setStatusFilter('')
-                  handleFilterChange()
+                  setCurrentPage(1) // Reset to first page when clearing filters
                 }}
                 className="w-full"
               >

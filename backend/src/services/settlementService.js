@@ -4,104 +4,129 @@ const Contribution = require('../models/Contribution')
 const Loan = require('../models/Loan')
 const Settlement = require('../models/Settlement')
 const ApiError = require('../utils/ApiError')
-const { logAudit } = require('../utils/auditLogger')
 const { createNotification } = require('../utils/notificationHelper')
 
 /**
- * Calculate the settlement amount for a member.
+ * Calculate settlement preview for a member.
  * @param {string} memberId
- * @returns {Promise<{ totalContributions: number, remainingLoan: number, netAmount: number, direction: string }>}
+ * @returns {Promise<{ totalContributions: number, activeLoans: number, suggestedPayout: number, hasActiveLoans: boolean, activeLoans: array }>}
  */
-async function calculateSettlement(memberId) {
+async function calculateSettlementPreview(memberId) {
   const member = await Member.findOne({ _id: memberId, isDeleted: false })
   if (!member) throw new ApiError(404, 'Member not found')
-  if (member.status === 'Exited') throw new ApiError(400, 'Member has already been settled')
+  if (member.status === 'Settled') throw new ApiError(400, 'Member has already been settled')
 
-  const [contributionResult, loanResult] = await Promise.all([
+  const [contributionResult, activeLoans] = await Promise.all([
     Contribution.aggregate([
       { $match: { memberId: new mongoose.Types.ObjectId(memberId), status: 'paid' } },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]),
-    Loan.aggregate([
-      { $match: { memberId: new mongoose.Types.ObjectId(memberId), status: 'active' } },
-      { $group: { _id: null, total: { $sum: '$remaining' } } },
-    ]),
+    Loan.find({ memberId: memberId, status: 'active' }).select('_id loanNumber remaining dueDate'),
   ])
 
   const totalContributions = Math.round((contributionResult[0]?.total || 0) * 100) / 100
-  const remainingLoan = Math.round((loanResult[0]?.total || 0) * 100) / 100
-  const netAmount = Math.round((totalContributions - remainingLoan) * 100) / 100
+  const activeLoansTotal = Math.round(
+    activeLoans.reduce((sum, loan) => sum + loan.remaining, 0) * 100,
+  ) / 100
+  const suggestedPayout = Math.round((totalContributions - activeLoansTotal) * 100) / 100
 
-  let direction
-  if (netAmount > 0) direction = 'pay_to_member'
-  else if (netAmount < 0) direction = 'collect_from_member'
-  else direction = 'zero'
-
-  return { totalContributions, remainingLoan, netAmount, direction }
+  return {
+    totalContributions,
+    activeLoansTotal,
+    suggestedPayout,
+    hasActiveLoans: activeLoans.length > 0,
+    activeLoanDetails: activeLoans.map((loan) => ({
+      loanId: loan._id,
+      loanNumber: loan.loanNumber,
+      remaining: loan.remaining,
+      dueDate: loan.dueDate,
+    })),
+  }
 }
 
 /**
  * Execute a member settlement — close loans, update member, create settlement record.
  * @param {string} memberId
- * @param {{ notes?: string }} data
+ * @param {{ payoutAmount: number }} data
  * @param {object} meta - { adminId, ip, userAgent }
  * @returns {Promise<object>}
  */
 async function executeSettlement(memberId, data, meta = {}) {
   const member = await Member.findOne({ _id: memberId, isDeleted: false })
   if (!member) throw new ApiError(404, 'Member not found')
-  if (member.status === 'Exited') throw new ApiError(400, 'Member has already been settled')
+  if (member.status === 'Settled') throw new ApiError(400, 'Member has already been settled')
   if (!meta.performedBy) throw new ApiError(401, 'Admin authentication required')
 
-  const settlement = await calculateSettlement(memberId)
+  const preview = await calculateSettlementPreview(memberId)
+
+  if (preview.hasActiveLoans) {
+    throw new ApiError(400, 'Cannot settle member with active loans. Please close all loans first.')
+  }
+
+  const payoutAmount = Math.round((Number(data.payoutAmount) || 0) * 100) / 100
+  if (payoutAmount < 0 || payoutAmount > preview.totalContributions) {
+    throw new ApiError(400, `Payout amount must be between 0 and ${preview.totalContributions}`)
+  }
 
   const session = await mongoose.startSession()
   session.startTransaction()
   try {
-    // Close all active loans
-    await Loan.updateMany(
-      { memberId: memberId, status: 'active' },
-      { $set: { remaining: 0, status: 'paid', closedAt: new Date() } },
-      { session },
-    )
-
-    // Update member status
-    member.status = 'Exited'
-    member.exitedAt = new Date()
+    // Update member status to Settled
+    member.status = 'Settled'
+    member.settledAt = new Date()
+    member.settledBy = meta.performedBy
     await member.save({ session })
+
+    // Determine direction and net amount
+    const netAmount = Math.round((payoutAmount - preview.activeLoansTotal) * 100) / 100
+    let direction = 'zero'
+    if (netAmount > 0) direction = 'pay_to_member'
+    else if (netAmount < 0) direction = 'collect_from_member'
 
     // Create settlement record
     const [settlementRecord] = await Settlement.create(
       [
         {
           memberId: member._id,
-          totalContributions: settlement.totalContributions,
-          remainingLoan: settlement.remainingLoan,
-          netAmount: Math.abs(settlement.netAmount),
-          direction: settlement.direction,
-          notes: data.notes?.trim() || '',
-          settledBy: meta.performedBy,
+          totalContributions: preview.totalContributions,
+          remainingLoan: preview.activeLoansTotal,
+          netAmount: Math.abs(netAmount),
+          direction,
           settledAt: new Date(),
+          settledBy: meta.performedBy,
         },
       ],
       { session },
     )
 
+    // Create a negative contribution record to reflect the payout deduction
+    // This ensures the fund balance is recalculated correctly
+    if (payoutAmount > 0) {
+      const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
+      const payoutRecord = await Contribution.create(
+        [
+          {
+            memberId: member._id,
+            month: currentMonth,
+            amount: -payoutAmount,
+            status: 'paid',
+            isSettlementPayout: true,
+            paymentDate: new Date(),
+          },
+        ],
+        { session },
+      )
+      console.log('[settlementService] Created negative contribution:', payoutRecord[0]?._id, 'amount:', -payoutAmount)
+    }
+
     await session.commitTransaction()
     session.endSession()
-
-    logAudit(meta, {
-      action: 'MEMBER_SETTLED',
-      entity: 'Settlement',
-      entityId: settlementRecord._id,
-      description: `Member ${member.name} settled. Net: ${settlement.direction === 'pay_to_member' ? 'Pay' : 'Collect'} ₹${Math.abs(settlement.netAmount).toLocaleString('en-IN')}`,
-    })
 
     createNotification({
       recipientId: member._id,
       recipientRole: 'member',
       title: 'Account settled',
-      message: `Your account has been settled. Final settlement amount: ₹${Math.abs(settlement.netAmount).toLocaleString('en-IN')}. Thank you for being a member.`,
+      message: `Your account has been settled. Payout amount: ₹${payoutAmount.toLocaleString('en-IN')}. Thank you for being a member.`,
       type: 'info',
       relatedEntity: 'Settlement',
       relatedEntityId: settlementRecord._id,
@@ -112,13 +137,14 @@ async function executeSettlement(memberId, data, meta = {}) {
         id: member._id,
         name: member.name,
         status: member.status,
-        exitedAt: member.exitedAt,
+        settledAt: member.settledAt,
       },
       settlement: settlementRecord,
     }
   } catch (error) {
     try { await session.abortTransaction() } catch {}
     try { session.endSession() } catch {}
+    console.error('[settlementService] Settlement execution error:', error.message, error.stack)
     if (error instanceof ApiError) throw error
     throw new ApiError(500, 'Failed to process settlement. Please try again.')
   }
@@ -155,7 +181,6 @@ async function listSettlements({ page = 1, limit = 50 } = {}) {
       netAmount: s.netAmount,
       direction: s.direction,
       settledAt: s.settledAt,
-      notes: s.notes,
       settledBy: s.settledBy ? { id: s.settledBy._id, name: s.settledBy.name } : null,
     })),
     pagination: {
@@ -167,4 +192,8 @@ async function listSettlements({ page = 1, limit = 50 } = {}) {
   }
 }
 
-module.exports = { calculateSettlement, executeSettlement, listSettlements }
+module.exports = {
+  calculateSettlementPreview,
+  executeSettlement,
+  listSettlements,
+}

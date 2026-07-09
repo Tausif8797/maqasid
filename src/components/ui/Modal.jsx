@@ -51,7 +51,7 @@ export default function Modal({ open, onClose, title, children, footer, size = '
             <FiX className="h-5 w-5" />
           </button>
         </div>
-        <div className="px-6 py-5">{children}</div>
+        <div className="max-h-[60vh] overflow-y-auto px-6 py-5">{children}</div>
         {footer ? (
           <div className="flex justify-end gap-3 border-t border-slate-100 px-6 py-4">
             {footer}

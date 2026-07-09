@@ -2,43 +2,85 @@
 const Notification = require('../models/Notification')
 
 /**
- * Fire-and-forget notification creation helper.
+ * Create a notification for a user.
  *
- * @param {object} options
- * @param {string}      options.recipientId        - ObjectId of the admin or member to notify
- * @param {string}      options.recipientRole       - 'admin' or 'member'
- * @param {string}      options.title               - Short notification title
- * @param {string}      options.message             - Full notification message
- * @param {string}      [options.type='info']       - 'info' | 'success' | 'warning' | 'alert'
- * @param {string|null} [options.relatedEntity]     - Entity type (e.g. 'Loan')
- * @param {string|null} [options.relatedEntityId]   - ObjectId of the related document
+ * @param {object} data - Notification data
+ * @param {string|mongoose.Types.ObjectId} data.recipientId - ID of the recipient (Member or Admin)
+ * @param {string} data.recipientRole - 'member' or 'admin'
+ * @param {string} data.title - Notification title (max 200 chars)
+ * @param {string} data.message - Notification message (max 1000 chars)
+ * @param {string} [data.type='info'] - 'success', 'warning', 'info', or 'alert'
+ * @param {string} [data.relatedEntity] - Related entity name (e.g., 'Loan', 'Contribution')
+ * @param {string|mongoose.Types.ObjectId} [data.relatedEntityId] - ID of the related entity
  *
- * NOTE: This function never throws. Notification failures are caught silently so
- * they never disrupt the main request/response cycle.
+ * @returns {Promise<object>} The created notification document
+ *
+ * @example
+ * createNotification({
+ *   recipientId: memberId,
+ *   recipientRole: 'member',
+ *   title: 'Loan issued',
+ *   message: 'A loan of ₹5000 has been issued to you.',
+ *   type: 'success',
+ *   relatedEntity: 'Loan',
+ *   relatedEntityId: loanId
+ * })
  */
-const createNotification = async ({
-  recipientId,
-  recipientRole,
-  title,
-  message,
-  type = 'info',
-  relatedEntity = null,
-  relatedEntityId = null,
-} = {}) => {
+const createNotification = async (data) => {
   try {
-    await Notification.create({
+    const {
       recipientId,
       recipientRole,
       title,
       message,
-      type,
+      type = 'info',
       relatedEntity,
       relatedEntityId,
+    } = data
+
+    // Validate required fields
+    if (!recipientId) {
+      throw new Error('recipientId is required')
+    }
+    if (!recipientRole) {
+      throw new Error('recipientRole is required')
+    }
+    if (!title) {
+      throw new Error('title is required')
+    }
+    if (!message) {
+      throw new Error('message is required')
+    }
+
+    // Validate recipientRole
+    if (!['member', 'admin'].includes(recipientRole)) {
+      throw new Error('recipientRole must be either "member" or "admin"')
+    }
+
+    // Validate type
+    if (!['success', 'warning', 'info', 'alert'].includes(type)) {
+      throw new Error('type must be one of: success, warning, info, alert')
+    }
+
+    // Create the notification
+    const notification = await Notification.create({
+      recipientId,
+      recipientRole,
+      title: title.trim(),
+      message: message.trim(),
+      type,
+      relatedEntity: relatedEntity?.trim() || undefined,
+      relatedEntityId: relatedEntityId || undefined,
     })
+
+    return notification
   } catch (err) {
+    // Log error in non-production environments
     if (process.env.NODE_ENV !== 'production') {
       console.error('[notificationHelper] Failed to create notification:', err.message)
     }
+    // Return null instead of throwing to prevent disrupting the main flow
+    return null
   }
 }
 
