@@ -14,6 +14,7 @@ import {
   FiCheck,
   FiToggleLeft,
   FiToggleRight,
+  FiSend,
 } from 'react-icons/fi'
 import Breadcrumb from '../../components/layout/Breadcrumb.jsx'
 import PageHeader from '../../components/ui/PageHeader.jsx'
@@ -29,6 +30,8 @@ import PaymentTimeline from '../../components/cards/PaymentTimeline.jsx'
 import SettlementModal from '../../components/cards/SettlementModal.jsx'
 import { useData } from '../../hooks/useData.js'
 import { formatCurrency, formatDate, getInitials } from '../../utils/format.js'
+import { memberApi } from '../../api/memberApi.js'
+import EmailPreviewModal from '../../components/modals/EmailPreviewModal.jsx'
 
 const TABS = [
   { key: 'profile', label: 'Profile', icon: FiUser },
@@ -54,6 +57,7 @@ export default function MemberDetails() {
   const [settled, setSettled] = useState(false)
   const [message, setMessage] = useState('')
   const [loansWithRepayments, setLoansWithRepayments] = useState([])
+  const [showEmailModal, setShowEmailModal] = useState(false)
 
   const member = getMemberById(id)
 
@@ -64,6 +68,13 @@ export default function MemberDetails() {
   const isActive = member?.status?.toLowerCase() === 'active'
   const isExited = member?.status?.toLowerCase() === 'exited'
   const isSettled = member?.status?.toLowerCase() === 'settled'
+  
+  // Check if mail icon should be visible
+  const currentDate = new Date()
+  const currentMonthForQuery = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
+  const hasUnpaidContribution = contributions.some(c => c.month === currentMonthForQuery && c.status === 'unpaid')
+  const hasActiveLoans = loans.some(l => l.status === 'active')
+  const showMailIcon = hasUnpaidContribution || hasActiveLoans
 
   // Fetch loans with repayments from API (only on mount/id change)
   useEffect(() => {
@@ -147,6 +158,18 @@ export default function MemberDetails() {
     }
   }
 
+  /** Open email preview modal. */
+  const handleOpenEmailModal = () => {
+    setShowEmailModal(true)
+  }
+
+  /** Handle email send confirmation from modal. */
+  const handleEmailSent = (result) => {
+    setShowEmailModal(false)
+    setMessage(`Email sent successfully to ${member.email}`)
+    setTimeout(() => setMessage(''), 3000)
+  }
+
   return (
     <div>
       <Breadcrumb
@@ -182,7 +205,7 @@ export default function MemberDetails() {
           >
             {getInitials(member.name)}
           </span>
-          <div className="flex-1">
+            <div className="flex-1">
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-bold text-slate-800">{member.name}</h2>
               <Badge>
@@ -205,6 +228,16 @@ export default function MemberDetails() {
               </p>
             </div>
           </div>
+          {showMailIcon && (
+            <button
+              type="button"
+              onClick={handleOpenEmailModal}
+              className="ml-auto flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600 sm:h-9 sm:w-9"
+              title="Send email notification"
+            >
+              <FiMail className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
+          )}
         </CardBody>
       </Card>
 
@@ -383,6 +416,15 @@ export default function MemberDetails() {
           )}
         </CardBody>
       </Card>
+
+      <EmailPreviewModal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        onConfirm={handleEmailSent}
+        memberId={memberId}
+        memberName={member.name}
+        memberEmail={member.email}
+      />
 
       <SettlementModal
         member={{

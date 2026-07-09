@@ -73,7 +73,7 @@ export default function LoginPage() {
           </p>
         </div>
         <p className="text-sm text-indigo-100">
-          © 2024 Maqasid Bank · All rights reserved
+          © 2026 Maqasid Bank · All rights reserved
         </p>
         <div className="pointer-events-none absolute -right-24 top-1/3 h-72 w-72 rounded-full bg-sky-400/40 blur-3xl" />
         <div className="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-indigo-400/30 blur-3xl" />

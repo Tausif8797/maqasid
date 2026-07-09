@@ -47,4 +47,21 @@ export const memberApi = {
       method: 'PUT',
       body: { currentPassword, newPassword, confirmNewPassword },
     }).then((r) => r.data),
+
+  /** Preview contribution reminder email. Resolves to preview object. */
+  previewContributionReminder: (memberId) =>
+    apiRequest('/notifications/preview-email', {
+      method: 'POST',
+      body: { memberId },
+    }).then((r) => {
+      console.log('API raw response:', r)
+      return r
+    }),
+
+  /** Send contribution reminder email to a member. Resolves to result object. */
+  sendContributionReminder: (memberId) =>
+    apiRequest('/notifications/send-email', {
+      method: 'POST',
+      body: { memberId },
+    }).then((r) => r.data),
 }
