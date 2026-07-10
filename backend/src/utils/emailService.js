@@ -1,32 +1,21 @@
-const nodemailer = require('nodemailer')
+const { Resend } = require('resend')
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 const sendEmail = async (options) => {
   try {
-    const {
-      SMTP_HOST = process.env.SMTP_HOST,
-      SMTP_PORT = process.env.SMTP_PORT,
-      SMTP_USER = process.env.SMTP_USER,
-      SMTP_PASS = process.env.SMTP_PASS,
-      FROM_EMAIL = process.env.FROM_EMAIL,
-      FROM_NAME = process.env.FROM_NAME || 'Maqasid Bank',
-    } = process.env
+    const FROM_EMAIL = process.env.FROM_EMAIL
+    const FROM_NAME = process.env.FROM_NAME || 'Maqasid Bank'
 
-    if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !FROM_EMAIL) {
-      throw new Error('Email configuration is incomplete. Please check environment variables.')
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('Resend API key is missing. Please set RESEND_API_KEY environment variable.')
     }
 
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: Number(SMTP_PORT),
-      secure: Number(SMTP_PORT) === 465,
-      family: 4,
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS,
-      },
-    })
+    if (!FROM_EMAIL) {
+      throw new Error('FROM_EMAIL is not configured.')
+    }
 
-    const info = await transporter.sendMail({
+    const { data, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: options.to,
       subject: options.subject,
@@ -34,7 +23,12 @@ const sendEmail = async (options) => {
       html: options.html,
     })
 
-    return info
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    console.log('[emailService] Email sent successfully via Resend')
+    return data
   } catch (err) {
     console.error('[emailService] Failed to send email:', err.message)
     throw err
