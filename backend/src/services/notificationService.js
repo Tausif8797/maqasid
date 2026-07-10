@@ -249,9 +249,15 @@ const sendContributionReminder = async (memberId) => {
       status: 'unpaid',
     })
 
-    if (!unpaidContribution) {
-      return { success: false, message: 'No unpaid contribution found for current month' }
-    }
+    // Check for paid contribution for current month
+    const paidContribution = await Contribution.findOne({
+      memberId,
+      month: currentMonth,
+      status: 'paid',
+    })
+
+    const hasUnpaidContribution = !!unpaidContribution
+    const hasPaidContribution = !!paidContribution
 
     // Check for active loans
     const activeLoans = await Loan.find({
@@ -292,6 +298,7 @@ const sendContributionReminder = async (memberId) => {
                   <span class="info-label">Month:</span>
                   <span class="info-value">${currentMonth}</span>
                 </div>
+                ${hasUnpaidContribution ? `
                 <div class="info-row">
                   <span class="info-label">Amount:</span>
                   <span class="info-value">₹${unpaidContribution.amount}</span>
@@ -300,6 +307,17 @@ const sendContributionReminder = async (memberId) => {
                   <span class="info-label">Status:</span>
                   <span class="info-value" style="color: #dc2626;">Unpaid</span>
                 </div>
+                ` : hasPaidContribution ? `
+                <div class="info-row">
+                  <span class="info-label">Amount:</span>
+                  <span class="info-value" style="color: #16a34a;">Paid</span>
+                </div>
+                ` : `
+                <div class="info-row">
+                  <span class="info-label">Amount:</span>
+                  <span class="info-value" style="color: #666;">(No contribution record for current month)</span>
+                </div>
+                `}
               </div>
     `
 
@@ -361,8 +379,8 @@ This is a friendly reminder about your monthly contribution.
 
 Contribution Details:
 - Month: ${currentMonth}
-- Amount: ₹${unpaidContribution.amount}
-- Status: Unpaid
+${hasUnpaidContribution ? `- Amount: ₹${unpaidContribution.amount}
+- Status: Unpaid` : hasPaidContribution ? '- Amount: Paid' : '- Amount: (No contribution record for current month)'}
 
 ${activeLoans.length > 0 ? 'Active Loan Details:\n' + activeLoans.map(loan => 
   `- Loan Amount: ₹${loan.amount}\n- Remaining Balance: ₹${loan.remaining}\n- Issue Date: ${new Date(loan.issueDate).toLocaleDateString('en-IN')}${loan.dueDate ? `\n- Due Date: ${new Date(loan.dueDate).toLocaleDateString('en-IN')}` : ''}`
@@ -392,7 +410,7 @@ Maqasid Bank
       message: `Email notification sent to ${member.email} for contribution reminder.`,
       type: 'info',
       relatedEntity: 'Contribution',
-      relatedEntityId: unpaidContribution._id,
+      relatedEntityId: unpaidContribution ? unpaidContribution._id : null,
     })
 
     return {
