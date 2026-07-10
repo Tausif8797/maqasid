@@ -49,7 +49,7 @@ export default function MemberDetails() {
     getContributionsByMember,
     getLoansByMember,
     updateMemberStatus,
-    loans: contextLoans,
+    refetchLoans,
   } = useData()
   const [tab, setTab] = useState('profile')
   const [togglingStatus, setTogglingStatus] = useState(false)
@@ -76,7 +76,7 @@ export default function MemberDetails() {
   const hasActiveLoans = loans.some(l => l.status === 'active')
   const showMailIcon = hasUnpaidContribution || hasActiveLoans
 
-  // Fetch loans with repayments from API (only on mount/id change)
+  // Fetch loans with repayments from API (only on mount/id change or when passbook tab is active)
   useEffect(() => {
     let active = true
     const fetchLoansWithRepayments = async () => {
@@ -96,7 +96,7 @@ export default function MemberDetails() {
       fetchLoansWithRepayments()
     }
     return () => { active = false }
-  }, [id])
+  }, [id, tab])
 
   // Use loans with repayments if available, otherwise fallback to context loans
   const displayLoans = loansWithRepayments.length > 0 ? loansWithRepayments : loans
@@ -155,6 +155,15 @@ export default function MemberDetails() {
       // Error handled by DataContext
     } finally {
       setTogglingStatus(false)
+    }
+  }
+
+  /** Handle tab change - refetch loans when switching to passbook tab */
+  const handleTabChange = (newTab) => {
+    setTab(newTab)
+    // If switching to passbook tab, refetch loans to get latest data
+    if (newTab === 'passbook') {
+      refetchLoans()
     }
   }
 
@@ -241,7 +250,7 @@ export default function MemberDetails() {
         </CardBody>
       </Card>
 
-      <Tabs tabs={TABS} active={tab} onChange={setTab} />
+      <Tabs tabs={TABS} active={tab} onChange={handleTabChange} />
 
       <div className="mt-5">
         {tab === 'profile' ? (

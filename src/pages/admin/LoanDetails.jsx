@@ -16,6 +16,7 @@ import { formatCurrency, formatDate } from '../../utils/format.js'
 export default function LoanDetails() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { refetchLoans } = useData()
   const [loan, setLoan] = useState(null)
   const [loading, setLoading] = useState(true)
   const [repayModalOpen, setRepayModalOpen] = useState(false)
@@ -77,6 +78,8 @@ export default function LoanDetails() {
       // Show success message
       setMessage('Repayment recorded successfully')
       setTimeout(() => setMessage(''), 3000)
+      // Refetch loans to update global context
+      refetchLoans()
     } catch (err) {
       setMessage(err.message || 'Failed to record repayment')
     } finally {
@@ -98,6 +101,8 @@ export default function LoanDetails() {
       setLoan(result.loan)
       setMessage('Loan closed successfully')
       setTimeout(() => setMessage(''), 3000)
+      // Refetch loans to update global context
+      refetchLoans()
     } catch {
       setMessage('Failed to close loan')
     } finally {

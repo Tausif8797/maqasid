@@ -97,6 +97,18 @@ export function DataProvider({ children }) {
     }
   }, [isAuthenticated, user?.role])
 
+  /** Refetch loans from the API to get latest data. */
+  const refetchLoans = useCallback(async () => {
+    if (!isAuthenticated || user?.role !== 'admin') return
+    try {
+      const data = await loanApi.list({ limit: 100 })
+      setLoans(data.loans || [])
+    } catch (err) {
+      // Silently fail - keep existing data
+      console.error('Failed to refetch loans:', err)
+    }
+  }, [isAuthenticated, user?.role])
+
   /** Add a new member via the API. Returns the created record. */
   const addMember = useCallback(async (input) => {
     const { member } = await memberApi.create(input)
@@ -258,6 +270,7 @@ export function DataProvider({ children }) {
       getContributionsByMember,
       getLoansByMember,
       refetchMembers: fetchMembers,
+      refetchLoans,
     }),
     [
       members,
@@ -279,6 +292,7 @@ export function DataProvider({ children }) {
       getContributionsByMember,
       getLoansByMember,
       fetchMembers,
+      refetchLoans,
     ],
   )
 
