@@ -1,19 +1,31 @@
 const { Resend } = require('resend')
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+/**
+ * Lazily initialised Resend client. Creating the instance at the top level
+ * would crash the whole app on boot when RESEND_API_KEY is not set, so we
+ * defer construction until the first email is actually sent.
+ */
+let _resend = null
+function getResend() {
+  if (!_resend) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('Missing API key. Pass it to the constructor `new Resend("re_123")`')
+    }
+    _resend = new Resend(process.env.RESEND_API_KEY)
+  }
+  return _resend
+}
 
 const sendEmail = async (options) => {
   try {
     const FROM_EMAIL = process.env.FROM_EMAIL
     const FROM_NAME = process.env.FROM_NAME || 'Maqasid Bank'
 
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error('Resend API key is missing. Please set RESEND_API_KEY environment variable.')
-    }
-
     if (!FROM_EMAIL) {
       throw new Error('FROM_EMAIL is not configured.')
     }
+
+    const resend = getResend()
 
     const { data, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,

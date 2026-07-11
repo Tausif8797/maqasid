@@ -19,6 +19,7 @@ export function DataProvider({ children }) {
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [selectedMonth, setSelectedMonth] = useState(null)
   const { isAuthenticated, user } = useAuth()
 
   /** Normalize a member from the API (map _id to id, ensure status casing). */
@@ -216,6 +217,28 @@ export function DataProvider({ children }) {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   }, [])
 
+  // Default selected month to the current month on first render.
+  useEffect(() => {
+    if (selectedMonth === null) {
+      setSelectedMonth(currentMonthStr)
+    }
+  }, [currentMonthStr, selectedMonth])
+
+  /** One row per member for the selected month on the contribution management page. */
+  const selectedMonthContributions = useMemo(() => {
+    if (!selectedMonth) return []
+    return members.map((member) => {
+      const record = contributions.find(
+        (c) => c.memberId === member.id && c.month === selectedMonth,
+      )
+      return {
+        member,
+        contribution: record ?? null,
+        status: record ? record.status : 'unpaid',
+      }
+    })
+  }, [members, contributions, selectedMonth])
+
   /** One "current month" row per member for the contribution management page. */
   const currentMonthContributions = useMemo(
     () =>
@@ -259,6 +282,9 @@ export function DataProvider({ children }) {
       stats,
       loading,
       error,
+      selectedMonth,
+      setSelectedMonth,
+      selectedMonthContributions,
       currentMonthContributions,
       currentMonthStr,
       addMember,
@@ -280,6 +306,9 @@ export function DataProvider({ children }) {
       stats,
       loading,
       error,
+      selectedMonth,
+      setSelectedMonth,
+      selectedMonthContributions,
       currentMonthContributions,
       currentMonthStr,
       addMember,
