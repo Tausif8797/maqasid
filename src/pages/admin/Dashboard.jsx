@@ -70,8 +70,8 @@ export default function AdminDashboard() {
       tone: 'amber',
     },
     {
-      label: 'Loan Given',
-      value: data ? formatCurrency(data.totalActiveLoanPrincipal) : '—',
+      label: 'Loan Outstanding',
+      value: data ? formatCurrency(data.totalActiveLoanAmount) : '—',
       icon: FiTrendingUp,
       tone: 'slate',
     },
