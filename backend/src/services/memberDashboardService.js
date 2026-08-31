@@ -15,9 +15,21 @@ async function getMemberDashboard(memberId) {
     throw new ApiError(404, 'Member not found')
   }
 
-  const [contributions, loans] = await Promise.all([
+  const [contributions, loans, fundAgg] = await Promise.all([
     Contribution.find({ memberId }).sort({ month: -1 }),
     Loan.find({ memberId, status: 'active' }).sort({ issueDate: -1 }),
+    // System-wide fund aggregations
+    Promise.all([
+      Contribution.aggregate([
+        { $match: { status: 'paid' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]),
+      Loan.aggregate([
+        { $match: { status: 'active' } },
+        { $group: { _id: null, total: { $sum: '$remaining' } } },
+      ]),
+      Loan.countDocuments({ status: 'active' }),
+    ]),
   ])
 
   const totalContribution = contributions
@@ -44,6 +56,12 @@ async function getMemberDashboard(memberId) {
     nextContributionMonth = `${nextYear}-${String(nextMonth).padStart(2, '0')}`
   }
 
+  // System-wide fund calculations
+  const [totalCollectedAgg, activeLoanRemainingAgg, totalActiveLoans] = fundAgg
+  const totalFundBalance = totalCollectedAgg[0]?.total || 0
+  const totalActiveLoanRemaining = activeLoanRemainingAgg[0]?.total || 0
+  const availableBalance = totalFundBalance - totalActiveLoanRemaining
+
   return {
     profile: {
       name: member.name,
@@ -55,6 +73,9 @@ async function getMemberDashboard(memberId) {
     totalContribution,
     totalLoan,
     remainingLoan,
+    totalFundBalance,
+    availableBalance,
+    totalActiveLoans,
     lastContribution: lastContribution
       ? {
           month: lastContribution.month,
@@ -78,4 +99,24 @@ async function getMemberDashboard(memberId) {
   }
 }
 
-module.exports = { getMemberDashboard }
+/**
+ * Get all active loans across all members (for the fund overview modal).
+ * @returns {Promise<Array>} Active loans with member name populated
+ */
+async function getAllActiveLoans() {
+  const loans = await Loan.find({ status: 'active' })
+    .populate('memberId', 'name')
+    .sort({ issueDate: -1 })
+    .lean()
+
+  return loans.map((l) => ({
+    id: l._id,
+    memberName: l.memberId?.name || 'Unknown',
+    amount: l.amount,
+    remaining: l.remaining,
+    issueDate: l.issueDate,
+    dueDate: l.dueDate,
+  }))
+}
+
+module.exports = { getMemberDashboard, getAllActiveLoans }

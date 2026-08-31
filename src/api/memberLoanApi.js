@@ -18,4 +18,20 @@ export const memberLoanApi = {
   /** Fetch loan passbook with payment history. */
   getMyLoanPassbook: (loanId) =>
     apiRequest(`/member/loans/${loanId}/passbook`).then((r) => r.data),
+
+  /** Submit a new loan request. */
+  applyForLoan: (body) =>
+    apiRequest('/member/loan-requests', { method: 'POST', body }).then((r) => r.data),
+
+  /** Fetch available funds shown on the apply form. */
+  getAvailableFunds: () =>
+    apiRequest('/member/loan-requests/available-funds').then((r) => r.data.availableFunds),
+
+  /** Fetch all loan requests for the logged-in member. */
+  getMyLoanRequests: () =>
+    apiRequest('/member/loan-requests').then((r) => r.data),
+
+  /** Withdraw a pending or approved loan request. */
+  withdrawLoanRequest: (requestId) =>
+    apiRequest(`/member/loan-requests/${requestId}/withdraw`, { method: 'PATCH' }).then((r) => r.data),
 }

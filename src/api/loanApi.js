@@ -45,4 +45,20 @@ export const loanApi = {
   /** Get available funds for issuing loans. */
   getAvailableFunds: () =>
     apiRequest('/loans/available-funds').then((r) => r.data),
+
+  /** Get all loan requests (admin). */
+  getLoanRequests: () =>
+    apiRequest('/admin/loan-requests').then((r) => r.data),
+
+  /** Approve a loan request (admin). */
+  approveLoanRequest: (id, data) =>
+    apiRequest(`/admin/loan-requests/${id}/approve`, { method: 'PATCH', body: data }).then((r) => r.data),
+
+  /** Reject a loan request (admin). */
+  rejectLoanRequest: (id, data) =>
+    apiRequest(`/admin/loan-requests/${id}/reject`, { method: 'PATCH', body: data }).then((r) => r.data),
+
+  /** Reorder a pending loan request in the queue (admin). */
+  reorderLoanRequest: (id, direction) =>
+    apiRequest(`/admin/loan-requests/${id}/reorder`, { method: 'PATCH', body: { direction } }).then((r) => r.data),
 }

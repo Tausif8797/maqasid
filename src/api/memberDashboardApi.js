@@ -6,4 +6,8 @@ export const memberDashboardApi = {
   /** Fetch logged-in member's dashboard data. */
   getMyDashboard: () =>
     apiRequest('/member/dashboard').then((r) => r.data),
+
+  /** Fetch all active loans across all members. */
+  getActiveLoans: () =>
+    apiRequest('/member/dashboard/active-loans').then((r) => r.data),
 }

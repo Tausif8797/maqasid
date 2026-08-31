@@ -15,4 +15,17 @@ const getMyDashboard = asyncHandler(async (req, res) => {
   })
 })
 
-module.exports = { getMyDashboard }
+/**
+ * @desc    Get all active loans across all members
+ * @route   GET /api/member/dashboard/active-loans
+ * @access  Private (member)
+ */
+const getAllActiveLoans = asyncHandler(async (req, res) => {
+  const loans = await memberDashboardService.getAllActiveLoans()
+  res.status(200).json({
+    success: true,
+    data: loans,
+  })
+})
+
+module.exports = { getMyDashboard, getAllActiveLoans }

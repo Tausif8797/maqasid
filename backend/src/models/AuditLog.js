@@ -22,6 +22,8 @@ const auditLogSchema = new mongoose.Schema(
         'CONTRIBUTION_STATUS_CHANGED',
         'LOAN_ISSUED',
         'LOAN_STATUS_CHANGED',
+        'LOAN_REQUEST_APPROVED',
+        'LOAN_REQUEST_REJECTED',
         'REPAYMENT_RECORDED',
         'SETTINGS_UPDATED',
       ],
@@ -29,7 +31,7 @@ const auditLogSchema = new mongoose.Schema(
     entity: {
       type: String,
       required: [true, 'Entity is required'],
-      enum: ['Auth', 'Member', 'Contribution', 'Loan', 'LoanRepayment', 'ContributionSetting'],
+      enum: ['Auth', 'Member', 'Contribution', 'Loan', 'LoanRepayment', 'LoanRequest', 'ContributionSetting'],
     },
     entityId: {
       type: mongoose.Schema.Types.ObjectId,

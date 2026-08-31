@@ -12,6 +12,8 @@ export default function StatCard({
   tone = 'brand',
   trend,
   trendLabel,
+  onClick,
+  viewAll,
 }) {
   const tones = {
     brand: 'bg-brand-50 text-brand-600',
@@ -23,7 +25,15 @@ export default function StatCard({
   const isUp = trend != null && trend >= 0
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+    <div
+      className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow ${
+        onClick ? 'cursor-pointer hover:shadow-md' : 'hover:shadow-md'
+      }`}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick() } : undefined}
+    >
       <div className="flex items-start justify-between">
         <p className="text-sm font-medium text-slate-500">{label}</p>
         {Icon ? (
@@ -49,6 +59,13 @@ export default function StatCard({
           {Math.abs(trend)}%
           <span className="font-normal text-slate-400">{trendLabel}</span>
         </p>
+      ) : null}
+      {viewAll ? (
+        <div className="-mx-5 -mb-5 mt-4">
+          <div className="border-t border-slate-100 px-5 py-2 text-center text-xs font-medium text-brand-600 transition-colors hover:bg-brand-50">
+            View all →
+          </div>
+        </div>
       ) : null}
     </div>
   )
